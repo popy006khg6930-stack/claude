@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<response>
+  <header>
+    <resultCode>000</resultCode>
+    <resultMsg>OK</resultMsg>
+  </header>
+  <body>
+    <items>
+      <item>
+        <buildYear>2004</buildYear>
+        <buyerGbn>개인</buyerGbn>
+        <cdealDay> </cdealDay>
+        <cdealType> </cdealType>
+        <dealAmount>42,000</dealAmount>
+        <dealDay>5</dealDay>
+        <dealMonth>1</dealMonth>
+        <dealYear>2025</dealYear>
+        <dealingGbn>중개거래</dealingGbn>
+        <estateAgentSggNm>서울 마포구</estateAgentSggNm>
+        <excluUseAr>49.8</excluUseAr>
+        <floor>-1</floor>
+        <houseType>다세대</houseType>
+        <jibun>401-12</jibun>
+        <landAr>28.1</landAr>
+        <mhouseNm>샘플빌라</mhouseNm>
+        <rgstDate>25.01.30</rgstDate>
+        <sggCd>11440</sggCd>
+        <slerGbn>개인</slerGbn>
+        <umdNm>망원동</umdNm>
+      </item>
+    </items>
+    <numOfRows>1000</numOfRows>
+    <pageNo>1</pageNo>
+    <totalCount>1</totalCount>
+  </body>
+</response>

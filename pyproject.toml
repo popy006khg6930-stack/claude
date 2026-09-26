@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "silgeorae"
+version = "0.1.0"
+description = "국토교통부 부동산 실거래가 자동 수집·정리 도구"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "tomli>=2.0; python_version < '3.11'",
+]
+
+[project.optional-dependencies]
+excel = ["openpyxl>=3.1"]
+dev = ["pytest>=7.4", "openpyxl>=3.1"]
+
+[project.scripts]
+silgeorae = "silgeorae.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+silgeorae = ["data/*.csv"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "--import-mode=importlib"

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<response>
+  <header>
+    <resultCode>000</resultCode>
+    <resultMsg>OK</resultMsg>
+  </header>
+  <body>
+    <items>
+      <item>
+        <buildYear>2019</buildYear>
+        <buyerGbn>개인</buyerGbn>
+        <cdealDay> </cdealDay>
+        <cdealType> </cdealType>
+        <dealAmount>31,500</dealAmount>
+        <dealDay>11</dealDay>
+        <dealMonth>1</dealMonth>
+        <dealYear>2025</dealYear>
+        <dealingGbn>중개거래</dealingGbn>
+        <estateAgentSggNm>서울 강남구</estateAgentSggNm>
+        <excluUseAr>29.5</excluUseAr>
+        <floor>9</floor>
+        <jibun>823</jibun>
+        <offiNm>은하수타워</offiNm>
+        <sggCd>11680</sggCd>
+        <sggNm>강남구</sggNm>
+        <slerGbn>개인</slerGbn>
+        <umdNm>역삼동</umdNm>
+      </item>
+    </items>
+    <numOfRows>1000</numOfRows>
+    <pageNo>1</pageNo>
+    <totalCount>1</totalCount>
+  </body>
+</response>

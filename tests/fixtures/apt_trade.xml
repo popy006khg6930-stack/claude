@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<response>
+  <header>
+    <resultCode>000</resultCode>
+    <resultMsg>OK</resultMsg>
+  </header>
+  <body>
+    <items>
+      <item>
+        <aptDong>101</aptDong>
+        <aptNm>한빛마을1단지</aptNm>
+        <aptSeq>11680-9001</aptSeq>
+        <bonbun>0316</bonbun>
+        <bubun>0000</bubun>
+        <buildYear>2015</buildYear>
+        <buyerGbn>개인</buyerGbn>
+        <cdealDay> </cdealDay>
+        <cdealType> </cdealType>
+        <dealAmount>285,000</dealAmount>
+        <dealDay>3</dealDay>
+        <dealMonth>1</dealMonth>
+        <dealYear>2025</dealYear>
+        <dealingGbn>중개거래</dealingGbn>
+        <estateAgentSggNm>서울 강남구</estateAgentSggNm>
+        <excluUseAr>84.97</excluUseAr>
+        <floor>12</floor>
+        <jibun>316</jibun>
+        <landCd>1</landCd>
+        <landLeaseholdGbn>N</landLeaseholdGbn>
+        <rgstDate>25.02.10</rgstDate>
+        <roadNm>샘플로</roadNm>
+        <roadNmBonbun>00051</roadNmBonbun>
+        <roadNmBubun>00000</roadNmBubun>
+        <roadNmCd>3121022</roadNmCd>
+        <roadNmSeq>01</roadNmSeq>
+        <roadNmSggCd>11680</roadNmSggCd>
+        <roadNmbCd>0</roadNmbCd>
+        <sggCd>11680</sggCd>
+        <slerGbn>개인</slerGbn>
+        <umdCd>10600</umdCd>
+        <umdNm>대치동</umdNm>
+      </item>
+      <item>
+        <aptDong>103</aptDong>
+        <aptNm>한빛마을1단지</aptNm>
+        <aptSeq>11680-9001</aptSeq>
+        <bonbun>0316</bonbun>
+        <bubun>0000</bubun>
+        <buildYear>2015</buildYear>
+        <buyerGbn>개인</buyerGbn>
+        <cdealDay>25.01.28</cdealDay>
+        <cdealType>O</cdealType>
+        <dealAmount>  312,000</dealAmount>
+        <dealDay>15</dealDay>
+        <dealMonth>1</dealMonth>
+        <dealYear>2025</dealYear>
+        <dealingGbn>중개거래</dealingGbn>
+        <estateAgentSggNm>서울 강남구, 서울 서초구</estateAgentSggNm>
+        <excluUseAr>114.8</excluUseAr>
+        <floor>20</floor>
+        <jibun>316</jibun>
+        <landCd>1</landCd>
+        <landLeaseholdGbn>N</landLeaseholdGbn>
+        <rgstDate> </rgstDate>
+        <roadNm>샘플로</roadNm>
+        <roadNmBonbun>00051</roadNmBonbun>
+        <roadNmBubun>00000</roadNmBubun>
+        <roadNmCd>3121022</roadNmCd>
+        <roadNmSeq>01</roadNmSeq>
+        <roadNmSggCd>11680</roadNmSggCd>
+        <roadNmbCd>0</roadNmbCd>
+        <sggCd>11680</sggCd>
+        <slerGbn>법인</slerGbn>
+        <umdCd>10600</umdCd>
+        <umdNm>대치동</umdNm>
+      </item>
+      <item>
+        <aptDong> </aptDong>
+        <aptNm>푸른숲</aptNm>
+        <aptSeq>11680-9002</aptSeq>
+        <bonbun>0012</bonbun>
+        <bubun>0003</bubun>
+        <buildYear>1998</buildYear>
+        <buyerGbn>개인</buyerGbn>
+        <cdealDay> </cdealDay>
+        <cdealType> </cdealType>
+        <dealAmount>98,500</dealAmount>
+        <dealDay>27</dealDay>
+        <dealMonth>1</dealMonth>
+        <dealYear>2025</dealYear>
+        <dealingGbn>직거래</dealingGbn>
+        <estateAgentSggNm> </estateAgentSggNm>
+        <excluUseAr>59.96</excluUseAr>
+        <floor>3</floor>
+        <jibun>12-3</jibun>
+        <landCd>1</landCd>
+        <landLeaseholdGbn>N</landLeaseholdGbn>
+        <rgstDate> </rgstDate>
+        <roadNm> </roadNm>
+        <roadNmBonbun> </roadNmBonbun>
+        <roadNmBubun> </roadNmBubun>
+        <roadNmCd> </roadNmCd>
+        <roadNmSeq> </roadNmSeq>
+        <roadNmSggCd> </roadNmSggCd>
+        <roadNmbCd> </roadNmbCd>
+        <sggCd>11680</sggCd>
+        <slerGbn>개인</slerGbn>
+        <umdCd>10300</umdCd>
+        <umdNm>개포동</umdNm>
+      </item>
+    </items>
+    <numOfRows>1000</numOfRows>
+    <pageNo>1</pageNo>
+    <totalCount>3</totalCount>
+  </body>
+</response>

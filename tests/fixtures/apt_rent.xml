@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<response>
+  <header>
+    <resultCode>000</resultCode>
+    <resultMsg>OK</resultMsg>
+  </header>
+  <body>
+    <items>
+      <item>
+        <aptNm>한빛마을1단지</aptNm>
+        <buildYear>2015</buildYear>
+        <contractTerm>25.02~27.02</contractTerm>
+        <contractType>신규</contractType>
+        <dealDay>8</dealDay>
+        <dealMonth>1</dealMonth>
+        <dealYear>2025</dealYear>
+        <deposit>150,000</deposit>
+        <excluUseAr>84.97</excluUseAr>
+        <floor>7</floor>
+        <jibun>316</jibun>
+        <monthlyRent>0</monthlyRent>
+        <preDeposit> </preDeposit>
+        <preMonthlyRent> </preMonthlyRent>
+        <sggCd>11680</sggCd>
+        <umdNm>대치동</umdNm>
+        <useRRRight> </useRRRight>
+      </item>
+      <item>
+        <aptNm>한빛마을1단지</aptNm>
+        <buildYear>2015</buildYear>
+        <contractTerm>25.03~27.03</contractTerm>
+        <contractType>갱신</contractType>
+        <dealDay>21</dealDay>
+        <dealMonth>1</dealMonth>
+        <dealYear>2025</dealYear>
+        <deposit>100,000</deposit>
+        <excluUseAr>84.97</excluUseAr>
+        <floor>15</floor>
+        <jibun>316</jibun>
+        <monthlyRent>120</monthlyRent>
+        <preDeposit>100,000</preDeposit>
+        <preMonthlyRent>100</preMonthlyRent>
+        <sggCd>11680</sggCd>
+        <umdNm>대치동</umdNm>
+        <useRRRight>사용</useRRRight>
+      </item>
+      <item>
+        <aptNm>푸른숲</aptNm>
+        <buildYear>1998</buildYear>
+        <contractTerm> </contractTerm>
+        <contractType> </contractType>
+        <dealDay>30</dealDay>
+        <dealMonth>1</dealMonth>
+        <dealYear>2025</dealYear>
+        <deposit>45,000</deposit>
+        <excluUseAr>59.96</excluUseAr>
+        <floor>2</floor>
+        <jibun>12-3</jibun>
+        <monthlyRent>0</monthlyRent>
+        <preDeposit> </preDeposit>
+        <preMonthlyRent> </preMonthlyRent>
+        <sggCd>11680</sggCd>
+        <umdNm>개포동</umdNm>
+        <useRRRight> </useRRRight>
+      </item>
+    </items>
+    <numOfRows>1000</numOfRows>
+    <pageNo>1</pageNo>
+    <totalCount>3</totalCount>
+  </body>
+</response>
