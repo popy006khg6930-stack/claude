@@ -1,0 +1,103 @@
+# silgeorae 매일 자동 업데이트 — GitHub Actions 워크플로 템플릿
+# =============================================================================
+# 사용법
+#  1) 이 파일을 저장소의 .github/workflows/silgeorae-update.yml 로 복사합니다.
+#     (silgeorae 저장소를 fork 한 경우. 다른 저장소라면 '설치' 단계를
+#      pip install "silgeorae[excel] @ git+https://github.com/<계정>/<저장소>" 로 바꾸세요)
+#  2) 저장소 Settings → Secrets and variables → Actions 에서
+#     - Secrets   : DATA_GO_KR_SERVICE_KEY = 공공데이터포털 일반 인증키(Decoding)
+#                   (선택) SILGEORAE_WEBHOOK_URL, SILGEORAE_TELEGRAM_BOT_TOKEN, SILGEORAE_TELEGRAM_CHAT_ID
+#     - Variables : SILGEORAE_CONFIG = silgeorae.toml 내용 (인증키·토큰은 넣지 말고 Secrets 로!)
+#                   [report] output_dir 는 기본값(reports) 그대로 두세요. 비워 두면 아래 '기본 설정' 사용.
+#  3) Actions 탭 → silgeorae update → Run workflow 로 한 번 실행해 확인합니다.
+#
+# 동작
+#  - 매일 07:00 KST (= 전날 22:00 UTC). GitHub 사정으로 몇 분~수십 분 늦게 시작할 수 있습니다.
+#  - 거래 DB(data/silgeorae.db)는 actions/cache 로 실행 사이에 이어 씁니다.
+#    7일 동안 쓰지 않은 캐시는 지워지지만, 그러면 다음 실행에서 다시 받을 뿐입니다
+#    (처음 받는 지역·유형의 거래는 '신규' 알림에서 빠지므로 알림이 쏟아지지 않습니다).
+#  - 리포트(reports/)는 실행 결과 화면의 Artifacts 에서 내려받습니다 (14일 보관).
+#    공개 저장소라면 Artifacts 도 누구나 받을 수 있으니 주의하세요.
+name: silgeorae update
+
+on:
+  schedule:
+    - cron: "0 22 * * *"   # 매일 07:00 KST
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: silgeorae-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 설치
+        run: pip install ".[excel]"
+
+      - name: DB 복원 (이전 실행분)
+        uses: actions/cache/restore@v4
+        with:
+          path: data/silgeorae.db
+          key: silgeorae-db-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            silgeorae-db-
+
+      - name: 설정 파일 작성
+        env:
+          SILGEORAE_CONFIG: ${{ vars.SILGEORAE_CONFIG }}
+        run: |
+          mkdir -p data reports
+          if [ -n "$SILGEORAE_CONFIG" ]; then
+            printf '%s\n' "$SILGEORAE_CONFIG" > silgeorae.toml
+          else
+            # 기본 설정 — 저장소 변수 SILGEORAE_CONFIG 로 바꿔 쓰세요
+            cat > silgeorae.toml <<'EOF'
+          [watch]
+          regions = ["강남구", "마포구"]
+          deal_types = ["apt_sale", "apt_rent"]
+          months = 12
+
+          [report]
+          formats = ["xlsx", "html"]
+          EOF
+          fi
+
+      - name: 수집·알림·리포트
+        env:
+          SILGEORAE_SERVICE_KEY: ${{ secrets.DATA_GO_KR_SERVICE_KEY }}
+          SILGEORAE_WEBHOOK_URL: ${{ secrets.SILGEORAE_WEBHOOK_URL }}
+          SILGEORAE_TELEGRAM_BOT_TOKEN: ${{ secrets.SILGEORAE_TELEGRAM_BOT_TOKEN }}
+          SILGEORAE_TELEGRAM_CHAT_ID: ${{ secrets.SILGEORAE_TELEGRAM_CHAT_ID }}
+        # 환경변수 대신 옵션으로 넘기려면:
+        #   silgeorae --db data/silgeorae.db --key "${{ secrets.DATA_GO_KR_SERVICE_KEY }}" update --report
+        run: silgeorae --db data/silgeorae.db update --report
+
+      - name: DB 저장 (다음 실행용)
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data/silgeorae.db
+          key: silgeorae-db-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: 리포트 올리기
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: silgeorae-reports-${{ github.run_id }}
+          path: reports/
+          if-no-files-found: ignore
+          retention-days: 14

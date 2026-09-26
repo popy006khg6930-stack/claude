@@ -1,0 +1,20 @@
+# silgeorae 자동 실행 예제 (Linux / macOS cron)
+# -----------------------------------------------------------------------------
+# 1) 'crontab -e' 로 편집기를 열고 아래 설정 줄을 붙여 넣습니다.
+# 2) /home/me/silgeorae 는 silgeorae.toml 이 있는 폴더로 바꿉니다.
+# 3) cron 은 서버 시간대로 동작합니다. 서버가 UTC 라면 한국 시간 07:05 = 22:05 입니다.
+#    (cronie 를 쓰는 배포판은 'CRON_TZ=Asia/Seoul' 줄을 먼저 넣어도 됩니다)
+# 4) 인증키를 설정 파일에 적지 않았다면 'SILGEORAE_SERVICE_KEY=인증키' 줄을 추가하세요.
+#    (crontab 은 다른 사용자가 볼 수 없지만, 설정 파일 권한도 chmod 600 으로 잠가 두면 좋습니다)
+# 5) 종료 코드: 0 성공 · 1 실행 중 오류(API 오류·수집 중단) · 2 설정 오류
+
+PYTHONUTF8=1
+
+# 매일 07:05 — 관심 지역 갱신 + 신규·해제 알림 + 리포트
+5 7 * * * cd /home/me/silgeorae && .venv/bin/silgeorae update --report >> update.log 2>&1
+
+# (가상환경 없이 설치했다면)
+# 5 7 * * * cd /home/me/silgeorae && python3 -m silgeorae update --report >> update.log 2>&1
+
+# (선택) 매주 월요일 06:30 — 최근 24개월 리포트 따로 만들기
+# 30 6 * * 1 cd /home/me/silgeorae && .venv/bin/silgeorae report --months 24 --format xlsx,html >> update.log 2>&1

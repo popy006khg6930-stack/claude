@@ -278,6 +278,14 @@ def run_collect(client, store, tasks, *, regions: RegionTable | None = None,
 
 명령어: `init`, `regions`, `collect`, `update`, `report`, `new`, `search`, `status`, `demo`.
 
+통합 때 확정된 확장 (모두 하위 호환):
+
+* `run_collect(..., now: datetime | None = None)` — 저장소의 수집 시각(`fetched_at`)으로 쓴다 (데모의 "일주일 전 수집").
+* `StorageError` 도 `ServiceKeyError`·`QuotaExceededError` 처럼 수집을 즉시 중단한다 (DB 가 잠기거나 가득 찼을 때 호출 한도 낭비 방지).
+* `CollectResult.note`(건너뜀·병합 사유), `CollectResult.invalid`(해석 실패 레코드 수),
+  `CollectSummary.planned / abort_kind / remaining / item_count / unchanged / invalid / error_results`.
+* 종료 코드: 0 성공 · 1 실행 중 오류(API 오류·수집 중단) · 2 설정·입력·지역 오류 · 130 중단.
+
 ## 6. 저장·갱신 전략
 
 * **파티션** = (DealType, 시군구, 계약연월). API 1회 조회 단위와 같다.
@@ -288,6 +296,11 @@ def run_collect(client, store, tasks, *, regions: RegionTable | None = None,
 * 과거 달은 한 번 받으면 건너뛰고, **최근 `refresh_months`(기본 3)개월은 매번 다시 받는다.**
   (`--force` 로 전체 재수집)
 * 키 규칙은 `Transaction.natural_key()` + `seq` — 해제·등기처럼 나중에 바뀌는 값은 키에 넣지 않는다.
+* **안전장치** (`pipeline._run_task`) — 포털의 일시적 빈 응답·부분 응답이 저장된 거래를 지우고,
+  다음 수집 때 '신규'로 다시 잡혀 알림이 쏟아지는 일을 막는다.
+  * 기존 5건 이상인 파티션의 응답이 0건 → 교체하지 않고 오류로 기록 (`last_ok_at` 유지, 다음 실행 때 재확인)
+  * 기존 20건 이상인데 응답이 절반 미만 → `upsert`(삭제 없는 병합) 후 `note` 로 알림
+* 첫 수집인 (유형, 시군구) 조합의 거래는 `update` 알림에서 '신규'로 치지 않는다 (관심 지역 추가 시 알림 폭주 방지).
 
 ## 7. 정리(분석) 항목
 
@@ -323,3 +336,16 @@ def run_collect(client, store, tasks, *, regions: RegionTable | None = None,
 * 공용 픽스처: `tests/fixtures/*.xml` (실제 응답 형식의 샘플)
 * 통합: `FakeTransport` + 합성 데이터로 `collect → store → report` 전 과정을 네트워크 없이 검증
 * 실행: `python -m pytest`
+
+## 9. 팀별 산출물 (통합 완료 시점)
+
+| 팀 | 주요 산출물 | 테스트 |
+|---|---|---|
+| 총괄 | 설계 문서, `models`·`errors`·`utils`, 지역코드표, 공용 픽스처, 통합 검증·안전장치 | `tests/test_*.py` |
+| A. 수집팀 | `MolitClient`(페이지네이션·재시도·간격 조절·Encoding 키 자동 처리), 오류 코드 분류, `FakeTransport`, `RegionTable`(이름·시도·구를 둔 시·옛 코드 해석), 법정동코드 동기화 | `tests/collector` |
+| B. 정제·저장팀 | 신·구 필드명 정규화(12종), `TransactionStore`(원자적 파티션 교체, 신규·변경·삭제·해제 감지, 수집 기록, 스키마 자동 확장) | `tests/processing` |
+| C. 분석·리포트팀 | 통계(월별·단지별·법정동별·면적대별·신고가·해제·전월세·전세가율·TOP N·신규), 엑셀(서식·네이티브 차트)·CSV(BOM)·HTML(인라인 SVG, 다크 모드, 모바일) | `tests/analysis` |
+| D. CLI·자동화팀 | 명령어 9종, TOML 설정, 수집 파이프라인, 오프라인 데모, Slack·Discord·텔레그램 알림, README, cron·작업 스케줄러·GitHub Actions 예제, CI | `tests/app` |
+
+통합 검증: 전체 테스트 외에 로컬 HTTP 서버(실제 `urllib_transport`)로 수집 → 저장 → 재수집(변경 0건) → 리포트를 확인했고,
+HTML 리포트는 Chromium 으로 데스크톱·390px 모바일·다크 모드 렌더링을 확인했다.
