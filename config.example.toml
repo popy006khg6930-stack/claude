@@ -1,0 +1,65 @@
+# silgeorae 설정 파일
+# =============================================================================
+# 'silgeorae init' 으로 만든 기본 설정입니다. 필요한 곳만 고쳐 쓰세요.
+#  - '#' 뒤는 주석입니다. 값을 바꾼 뒤 따로 저장만 하면 됩니다.
+#  - 상대 경로는 이 파일이 있는 폴더를 기준으로 합니다.
+#  - 윈도우 경로는 작은따옴표로 감싸거나('C:\data\silgeorae.db') 슬래시(/)를 쓰세요.
+#  - 명령행 옵션(--key, --db 등)이 이 파일보다 우선합니다.
+
+[api]
+# 공공데이터포털(data.go.kr) '일반 인증키(Decoding)' 를 붙여 넣으세요.
+# 파일에 적기 싫다면 비워 두고 환경변수 SILGEORAE_SERVICE_KEY 를 쓰거나
+# 명령마다 --key 옵션을 붙여도 됩니다. (우선순위: --key > 환경변수 > 이 파일)
+service_key = ""
+# 요청 한 번의 제한 시간(초)
+timeout = 20
+# 요청 사이 최소 간격(초). 0 이면 쉬지 않고 요청합니다.
+min_interval = 0
+
+[api.services]
+# API 서비스명이 바뀌었을 때만 '유형 코드 = "서비스명"' 형식으로 적습니다.
+# apt_sale = "RTMSDataSvcAptTradeDev"
+
+[storage]
+# 수집한 거래를 모아 두는 SQLite 파일
+db_path = "silgeorae.db"
+# 'silgeorae regions --sync' 로 받은 최신 지역코드표. 파일이 있으면 내장 표 대신 씁니다.
+regions_file = "regions.csv"
+
+[watch]
+# 'silgeorae update' 가 매번 확인할 관심 지역 (시군구 이름 또는 5자리 코드)
+#   예: regions = ["강남구", "마포구", "성남시 분당구", "11650"]
+#   '중구'처럼 여러 곳에 있는 이름은 "서울특별시 중구" 처럼 시도를 붙이거나 코드를 쓰세요.
+#   지역 이름·코드 찾기: silgeorae regions 검색어
+regions = []
+# 거래 유형 (한글도 가능: "아파트", "아파트 전월세", "오피스텔" …)
+#   apt_sale  아파트 매매        apt_rent  아파트 전월세
+#   offi_sale 오피스텔 매매      offi_rent 오피스텔 전월세
+#   rh_sale   연립다세대 매매    rh_rent   연립다세대 전월세
+#   sh_sale   단독/다가구 매매   sh_rent   단독/다가구 전월세
+#   presale   분양·입주권 전매   land      토지
+#   commercial 상업업무용        industrial 공장·창고
+#   "housing" = 주거용 8종, "all" = 전체 12종
+#   유형마다 공공데이터포털에서 해당 API 를 따로 활용신청해야 합니다.
+deal_types = ["apt_sale", "apt_rent"]
+# update 가 확인할 기간 (이번 달을 포함한 최근 N개월)
+months = 12
+# 최근 몇 개월은 이미 받았어도 매번 다시 받습니다.
+# (계약 후 30일 안에 신고되고, 해제·등기 정보가 나중에 반영되기 때문)
+refresh_months = 3
+
+[report]
+# 리포트 파일을 저장할 폴더
+output_dir = "reports"
+# 만들 형식: "xlsx"(엑셀, openpyxl 필요), "html", "csv"
+formats = ["xlsx", "html"]
+# 리포트 제목
+title = "부동산 실거래 정리"
+
+[notify]
+# 'silgeorae update' 가 새 거래·해제 거래를 찾으면 보낼 알림 (비워 두면 보내지 않음)
+# Slack 또는 Discord 웹훅 주소
+webhook_url = ""
+# 텔레그램: @BotFather 로 만든 봇 토큰과 메시지를 받을 채팅 ID
+telegram_bot_token = ""
+telegram_chat_id = ""
