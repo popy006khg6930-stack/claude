@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import date, datetime
 
 from silgeorae.console import (
@@ -113,6 +115,8 @@ def test_format_task_line():
     assert format_task_line(1, 2, _result("skipped", note="이미 수집됨")).endswith("→ 건너뜀 (이미 수집됨)")
     assert "11680" in format_task_line(1, 2, _result("skipped"))
     assert format_task_line(2, 2, _result("error", error="서버 오류")).endswith("→ 오류: 서버 오류")
+    merged = format_task_line(1, 1, _result("ok", item_count=10, partition=part, note="삭제 없이 병합했습니다"))
+    assert merged.endswith("· 삭제 없이 병합했습니다")
 
 
 def test_format_summary():

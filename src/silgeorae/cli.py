@@ -430,6 +430,7 @@ def _make_client(cfg: Config, key: str) -> Any:
         timeout=cfg.api_timeout,
         min_interval=cfg.api_min_interval,
         service_overrides=cfg.service_overrides or None,
+        **({"base_url": cfg.api_base_url} if cfg.api_base_url else {}),
     )
 
 

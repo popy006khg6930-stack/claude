@@ -301,23 +301,49 @@ def _generate_partition(deal_type: DealType, region: _Region, ym: str, seed: int
     return deals
 
 
-def generate_demo_data(months: Iterable[str], *, seed: int = 42, as_of: Optional[date] = None) -> RawItems:
+def generate_demo_data(
+    months: Iterable[str],
+    *,
+    seed: int = 42,
+    as_of: Optional[date] = None,
+    cancel_window: Optional[tuple[date, date]] = None,
+) -> RawItems:
     """가상 원본 데이터 ``{(유형, 시군구, 연월): [원본 dict, …]}`` 를 만든다 (같은 seed → 같은 결과).
 
     지역: 서울 강남구(11680)·마포구(11440), 성남시 분당구(41135). 유형: 아파트 매매·전월세.
     ``as_of`` 를 주면 그날까지 신고된 거래만, 그날까지 반영된 해제·등기 정보로 돌려준다.
+    ``cancel_window=(시작일, 끝일)`` 을 주면 시작일 전에 신고된 최근 매매 몇 건이 그 사이에 해제되게 해,
+    두 번 수집했을 때 '새로 해제' 감지가 항상 드러나게 한다.
     """
-    data: RawItems = {}
+    partitions: dict[tuple[DealType, str, str], list[_Deal]] = {}
     for ym in sorted({parse_ym(m) for m in months}):
         for region in DEMO_REGIONS:
             for deal_type in DEMO_DEAL_TYPES:
-                items = []
-                for deal in _generate_partition(deal_type, region, ym, seed):
-                    snap = deal.snapshot(as_of)
-                    if snap is not None:
-                        items.append(snap)
-                data[(deal_type, region.lawd_cd, ym)] = items
+                partitions[(deal_type, region.lawd_cd, ym)] = _generate_partition(deal_type, region, ym, seed)
+    if cancel_window is not None:
+        _force_cancellations(partitions, *cancel_window)
+    data: RawItems = {}
+    for key, deals in partitions.items():
+        data[key] = [snap for snap in (deal.snapshot(as_of) for deal in deals) if snap is not None]
     return data
+
+
+def _force_cancellations(
+    partitions: dict[tuple[DealType, str, str], list[_Deal]], start: date, end: date, per_region: int = 1
+) -> None:
+    """지역마다 ``start`` 전에 신고된 가장 최근 매매 ``per_region`` 건을 ``start``~``end`` 사이에 해제시킨다."""
+    for region in DEMO_REGIONS:
+        candidates = [
+            deal
+            for (deal_type, lawd_cd, _), deals in partitions.items()
+            if deal_type is DealType.APT_SALE and lawd_cd == region.lawd_cd
+            for deal in deals
+            if deal.reported < start and deal.cancel_date is None and (start - deal.deal_date).days <= 45
+        ]
+        candidates.sort(key=lambda deal: (deal.deal_date, deal.item["aptNm"], deal.item["floor"]), reverse=True)
+        for deal in candidates[:per_region]:
+            deal.cancel_date = min(end, start + timedelta(days=1))
+            deal.rgst_date = None
 
 
 # --------------------------------------------------------------------------- 실행
@@ -388,8 +414,10 @@ def run_demo(out_dir: str | Path, *, months: int = 24, today: Optional[date] = N
     tasks = plan_tasks(DEMO_DEAL_TYPES, lawd_cds, month_list)
     earlier = today - timedelta(days=DEMO_UPDATE_GAP_DAYS)
 
+    cancel_window = (earlier + timedelta(days=1), today)
+
     def collect(store: object, as_of: date, now: datetime) -> CollectSummary:
-        data = generate_demo_data(month_list, seed=seed, as_of=as_of)
+        data = generate_demo_data(month_list, seed=seed, as_of=as_of, cancel_window=cancel_window)
         client = MolitClient(DEMO_KEY, transport=FakeTransport(data), sleep=lambda seconds: None)
         summary = run_collect(
             client, store, tasks, regions=table, refresh_months=DEMO_REFRESH_MONTHS, today=as_of, now=now
@@ -415,7 +443,7 @@ def run_demo(out_dir: str | Path, *, months: int = 24, today: Optional[date] = N
     report = build_report(
         transactions, title=DEMO_TITLE, regions=names, period=period, new_since=new_since, today=today
     )
-    exports: list[tuple[str, Callable[[], object]]] = [
+    exports: list[tuple[str, Callable[[], Path]]] = [
         ("HTML", lambda: export_html(report, out / "demo_report.html")),
         ("CSV", lambda: export_csv(transactions, out / "demo_transactions.csv")),
     ]
@@ -427,7 +455,7 @@ def run_demo(out_dir: str | Path, *, months: int = 24, today: Optional[date] = N
     failure: Optional[ExportError] = None
     for label, export in exports:
         try:  # 예: 이전 결과 파일이 엑셀에서 열려 있으면 그 파일만 건너뛴다
-            paths.append(Path(export()))  # type: ignore[arg-type]
+            paths.append(Path(export()))
         except ExportError as exc:
             failure = exc
             log.warning("데모 %s 파일을 만들지 못했습니다: %s", label, exc)

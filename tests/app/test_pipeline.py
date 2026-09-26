@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import date, datetime
 
 import pytest
@@ -219,3 +221,44 @@ def test_api_calls_without_request_count(store):
 
     summary = run(Bare(), store, plan_tasks([SALE], ["11680"], ["202503"]))
     assert summary.ok == 1 and summary.api_calls == 0
+
+
+# ---------------------------------------------------------------- 비정상 응답 안전장치
+def _many_sales(make_sale, ym: str, n: int) -> list[dict[str, str]]:
+    return [make_sale(ym, day=1 + i % 28, floor=str(1 + i // 28), price=f"{80_000 + i * 100:,}") for i in range(n)]
+
+
+def test_empty_response_keeps_existing_rows(fake_client_cls, store, make_sale):
+    tasks = [CollectTask(SALE, "11680", "202503")]
+    run(fake_client_cls({(SALE, "11680", "202503"): _many_sales(make_sale, "202503", 6)}), store, tasks)
+    assert store.count() == 6
+    first_ok = store.last_fetched(SALE, "11680", "202503")
+
+    summary = run(fake_client_cls({(SALE, "11680", "202503"): []}), store, tasks)
+    result = summary.results[0]
+    assert result.status == "error" and "기존 6건" in result.error
+    assert summary.removed == 0 and store.count() == 6
+    assert store.last_fetched(SALE, "11680", "202503") == first_ok  # 성공 기록은 그대로
+    assert store.fetch_log(limit=1)[0].status == "error"
+
+
+def test_tiny_partition_may_legitimately_become_empty(fake_client_cls, store, make_sale):
+    tasks = [CollectTask(SALE, "11680", "202503")]
+    run(fake_client_cls({(SALE, "11680", "202503"): _many_sales(make_sale, "202503", 2)}), store, tasks)
+    summary = run(fake_client_cls({(SALE, "11680", "202503"): []}), store, tasks)
+    assert summary.results[0].status == "ok" and summary.removed == 2 and store.count() == 0
+
+
+def test_sharp_shrink_merges_without_deleting(fake_client_cls, store, make_sale):
+    tasks = [CollectTask(SALE, "11680", "202503")]
+    items = _many_sales(make_sale, "202503", 30)
+    run(fake_client_cls({(SALE, "11680", "202503"): items}), store, tasks)
+
+    partial = [dict(item) for item in items[:10]]
+    partial[0].update(cdealType="O", cdealDay="25.03.20")  # 받은 일부에는 변경도 반영된다
+    summary = run(fake_client_cls({(SALE, "11680", "202503"): partial}), store, tasks)
+    result = summary.results[0]
+    assert result.status == "ok" and "삭제 없이 병합" in result.note
+    assert summary.removed == 0 and store.count() == 30
+    assert summary.newly_cancelled == 1 and summary.unchanged == 9
+    assert store.fetch_log(limit=1)[0].status == "ok"

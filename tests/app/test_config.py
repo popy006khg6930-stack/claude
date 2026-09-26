@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 import pytest
@@ -167,6 +169,7 @@ def test_non_utf8_file_raises(tmp_path):
         ("[report]\nformats = []\n", "하나 이상"),
         ("[api]\ntimeout = 0\n", "timeout"),
         ("[api]\nmin_interval = -1\n", "min_interval"),
+        ('[api]\nbase_url = "apis.data.go.kr/1613000"\n', "base_url"),
         ("[api]\nservice_key = 1234\n", "service_key"),
         ('[api.services]\nspaceship = "X"\n', "spaceship"),
         ('[api.services]\napt_sale = ""\n', "서비스명"),
@@ -270,3 +273,9 @@ def test_template_loads_to_default_values(tmp_path):
                  "webhook_url", "telegram_bot_token", "telegram_chat_id", "api_timeout", "api_min_interval",
                  "service_overrides"):
         assert getattr(cfg, name) == getattr(defaults, name), name
+
+
+def test_base_url_is_optional_and_trimmed(tmp_path):
+    assert load_config(write(tmp_path / "a.toml", "[api]\n"), env={}).api_base_url == ""
+    cfg = load_config(write(tmp_path / "b.toml", '[api]\nbase_url = " http://apis.data.go.kr/1613000/ "\n'), env={})
+    assert cfg.api_base_url == "http://apis.data.go.kr/1613000"

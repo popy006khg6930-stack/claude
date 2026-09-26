@@ -287,6 +287,8 @@ def format_task_line(index: int, total: int, result: "CollectResult", region_nam
             )
         if result.invalid:
             tail += f" · 해석 실패 {result.invalid:,}건 건너뜀"
+        if result.note:
+            tail += f" · {result.note}"
     elif result.status == "skipped":
         tail = f"건너뜀 ({result.note})" if result.note else "건너뜀"
     else:

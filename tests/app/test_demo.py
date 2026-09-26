@@ -1,4 +1,6 @@
-from datetime import date
+from __future__ import annotations
+
+from datetime import date, timedelta
 
 import pytest
 
@@ -108,6 +110,10 @@ def test_run_demo_end_to_end(tmp_path):
     assert result.regions == ["서울특별시 강남구", "서울특별시 마포구", "경기도 성남시 분당구"]
     assert result.initial_summary.inserted > 100
     assert result.summary.skipped > 0  # 2차 수집은 최근 3개월만
+    assert result.summary.newly_cancelled == 3  # 지역마다 1건씩 1·2차 수집 사이에 해제
+    with TransactionStore(result.db_path) as store:
+        cancelled = [store.get(key) for key in result.summary.cancelled_keys]
+    assert all(tx.is_cancelled and tx.cancel_date == TODAY - timedelta(days=5) for tx in cancelled)
     with TransactionStore(result.db_path) as store:
         assert store.count() == result.transaction_count > 100
         new = store.query(first_seen_since=result.new_since)
@@ -115,3 +121,18 @@ def test_run_demo_end_to_end(tmp_path):
 
     again = run_demo(tmp_path / "demo", months=6, today=TODAY)  # 같은 폴더에 다시 실행
     assert again.transaction_count == result.transaction_count
+
+
+def test_run_demo_keeps_going_when_one_export_fails(tmp_path, monkeypatch, caplog):
+    from silgeorae import analysis
+    from silgeorae.errors import ExportError
+
+    def locked(*args, **kwargs):
+        raise ExportError("demo_transactions.csv 가 다른 프로그램에서 열려 있습니다")
+
+    monkeypatch.setattr(analysis, "export_csv", locked)
+    with caplog.at_level("WARNING", logger="silgeorae.demo"):
+        result = run_demo(tmp_path, months=2, today=TODAY)
+    assert "demo_report.html" in {path.name for path in result.report_paths}
+    assert "demo_transactions.csv" not in {path.name for path in result.report_paths}
+    assert "열려 있습니다" in caplog.text

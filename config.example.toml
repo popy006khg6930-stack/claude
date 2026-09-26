@@ -15,6 +15,9 @@ service_key = ""
 timeout = 20
 # 요청 사이 최소 간격(초). 0 이면 쉬지 않고 요청합니다.
 min_interval = 0
+# API 주소. 보통은 그대로 둡니다 (기본: https://apis.data.go.kr/1613000).
+# 회사망 등에서 HTTPS 인증서 오류가 계속 나면 "http://apis.data.go.kr/1613000" 으로 바꿔 볼 수 있습니다.
+# base_url = "https://apis.data.go.kr/1613000"
 
 [api.services]
 # API 서비스명이 바뀌었을 때만 '유형 코드 = "서비스명"' 형식으로 적습니다.

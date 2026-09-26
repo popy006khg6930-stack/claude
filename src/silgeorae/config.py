@@ -68,6 +68,7 @@ class Config:
     telegram_chat_id: str = ""
     api_timeout: float = 20.0  # 요청 제한 시간(초)
     api_min_interval: float = 0.0  # 요청 사이 최소 간격(초)
+    api_base_url: str = ""  # API 주소 (비우면 https://apis.data.go.kr/1613000)
     service_overrides: dict[DealType, str] = field(default_factory=dict)  # 서비스명 교체
     regions_file: Optional[Path] = None  # 있으면 내장 지역코드표 대신 사용
     config_path: Optional[Path] = None  # 읽어 들인 설정 파일 (없으면 None)
@@ -144,7 +145,7 @@ def _read_toml(path: Path) -> dict[str, Any]:
 
 
 _KNOWN_KEYS: dict[str, set[str]] = {
-    "api": {"service_key", "timeout", "min_interval", "services"},
+    "api": {"service_key", "timeout", "min_interval", "base_url", "services"},
     "storage": {"db_path", "regions_file"},
     "watch": {"regions", "deal_types", "months", "refresh_months"},
     "report": {"output_dir", "formats", "title"},
@@ -160,6 +161,10 @@ def _config_from_data(data: Mapping[str, Any], *, where: str, base_dir: Path) ->
     cfg.service_key = _get_str(api, "api", "service_key", "", where).strip()
     cfg.api_timeout = _get_float(api, "api", "timeout", cfg.api_timeout, where, positive=True)
     cfg.api_min_interval = _get_float(api, "api", "min_interval", cfg.api_min_interval, where)
+    cfg.api_base_url = _get_str(api, "api", "base_url", "", where).strip().rstrip("/")
+    if cfg.api_base_url and not cfg.api_base_url.startswith(("http://", "https://")):
+        reason = f"http:// 또는 https:// 로 시작해야 합니다 (현재 값: {cfg.api_base_url!r})"
+        raise _bad(where, "api", "base_url", reason)
     services = api.get("services", {})
     if not isinstance(services, Mapping):
         raise _bad(where, "api", "services", "'유형 코드 = \"서비스명\"' 형식의 표여야 합니다")
@@ -403,6 +408,9 @@ service_key = ""
 timeout = 20
 # 요청 사이 최소 간격(초). 0 이면 쉬지 않고 요청합니다.
 min_interval = 0
+# API 주소. 보통은 그대로 둡니다 (기본: https://apis.data.go.kr/1613000).
+# 회사망 등에서 HTTPS 인증서 오류가 계속 나면 "http://apis.data.go.kr/1613000" 으로 바꿔 볼 수 있습니다.
+# base_url = "https://apis.data.go.kr/1613000"
 
 [api.services]
 # API 서비스명이 바뀌었을 때만 '유형 코드 = "서비스명"' 형식으로 적습니다.

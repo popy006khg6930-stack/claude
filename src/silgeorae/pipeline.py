@@ -30,6 +30,11 @@ STATUS_ERROR = "error"
 SKIP_FUTURE = "미래 연월"
 SKIP_DONE = "이미 수집됨"
 
+# 비정상 응답으로부터 저장된 거래를 지키는 기준 (§6 파티션 교체의 안전장치)
+GUARD_MIN_EXISTING = 5  # 기존 거래가 이 이상인데 응답이 0건이면 교체하지 않는다
+GUARD_MIN_SHRINK_BASE = 20  # 기존 거래가 이 이상이고
+GUARD_SHRINK_RATIO = 0.5  # 응답이 기존의 이 비율 미만이면 삭제 없이 병합만 한다
+
 ABORT_SERVICE_KEY = "service_key"
 ABORT_QUOTA = "quota"
 ABORT_STORAGE = "storage"
@@ -248,12 +253,29 @@ def _run_task(
             sigungu=_sigungu_name(regions, task.lawd_cd),
             on_error=on_error,
         )
-        if now is None:
-            partition = store.replace_partition(task.deal_type, task.lawd_cd, task.deal_ym, transactions)
-        else:
-            partition = store.replace_partition(
-                task.deal_type, task.lawd_cd, task.deal_ym, transactions, fetched_at=now
+        existing = store.count(
+            deal_types=[task.deal_type], lawd_cds=[task.lawd_cd], start_ym=task.deal_ym, end_ym=task.deal_ym
+        )
+        if existing >= GUARD_MIN_EXISTING and not transactions:
+            # 포털이 가끔 일시적으로 빈 응답을 준다. 그대로 교체하면 저장된 거래가 모두 지워지고,
+            # 다음 수집 때 '신규'로 다시 잡혀 알림이 쏟아지므로 기존 데이터를 유지한다.
+            message = f"응답이 0건이라 기존 {existing:,}건을 그대로 두었습니다 (일시적 오류일 수 있어 다음 실행 때 다시 확인)"
+            log.info("%s %s %s: %s", task.deal_type.label, task.lawd_cd, task.deal_ym, message)
+            _record_error(store, task, SilgeoraeError(message), now)
+            return CollectResult(task, STATUS_ERROR, error=message, invalid=len(invalid))
+        fetched_at = {} if now is None else {"fetched_at": now}
+        if existing >= GUARD_MIN_SHRINK_BASE and len(transactions) < existing * GUARD_SHRINK_RATIO:
+            # 응답이 비정상적으로 줄었으면(부분 응답·형식 변경 등) 삭제 없이 병합만 한다.
+            note = f"응답 {len(transactions):,}건이 기존 {existing:,}건보다 크게 적어 삭제 없이 병합했습니다"
+            log.info("%s %s %s: %s", task.deal_type.label, task.lawd_cd, task.deal_ym, note)
+            partition = store.upsert(transactions, now=now)
+            store.record_fetch(
+                task.deal_type, task.lawd_cd, task.deal_ym, item_count=len(transactions), message=note, **fetched_at
             )
+            return CollectResult(
+                task, STATUS_OK, item_count=len(transactions), partition=partition, note=note, invalid=len(invalid)
+            )
+        partition = store.replace_partition(task.deal_type, task.lawd_cd, task.deal_ym, transactions, **fetched_at)
     except (ServiceKeyError, QuotaExceededError, StorageError) as exc:
         _record_error(store, task, exc, now)
         summary.aborted = True
